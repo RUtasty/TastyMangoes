@@ -2,7 +2,7 @@
 //  MoviePageView.swift
 //  TastyMangoes
 //
-//  Created by Claude on 11/13/25 at 7:02 PM
+//  Polished by Claude on 11/14/25 at 10:18 AM
 //
 
 import SwiftUI
@@ -222,7 +222,7 @@ struct MoviePageView: View {
     
     private var tabNavigationSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
+            HStack(spacing: 24) {
                 ForEach(MovieTab.allCases) { tab in
                     TabButton(
                         title: tab.rawValue,
@@ -232,9 +232,10 @@ struct MoviePageView: View {
                 }
             }
             .padding(.horizontal, 20)
+            .padding(.vertical, 12)
         }
         .background(Color.white)
-        .padding(.top, 16)
+        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
     
     // MARK: - Tab Content
@@ -254,25 +255,29 @@ struct MoviePageView: View {
                 similarTab
             }
         }
-        .padding(.top, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
     
     // MARK: - Overview Tab
     
     private func overviewTab(_ movie: MovieDetail) -> some View {
-        VStack(alignment: .leading, spacing: 24) {
-            // Scores Section
-            scoresSection(movie)
-            
-            // Synopsis
-            synopsisSection(movie)
-            
-            // Movie Info
-            movieInfoSection(movie)
-            
-            Spacer(minLength: 40)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Scores Section
+                scoresSection(movie)
+                
+                // Synopsis
+                synopsisSection(movie)
+                
+                // Movie Info
+                movieInfoSection(movie)
+                
+                Spacer(minLength: 60)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
         }
-        .padding(.horizontal, 20)
+        .background(Color(hex: "#FDFDFD"))
     }
     
     private func scoresSection(_ movie: MovieDetail) -> some View {
@@ -304,19 +309,26 @@ struct MoviePageView: View {
                 .font(.custom("Nunito-Bold", size: 20))
                 .foregroundColor(Color(hex: "#1A1A1A"))
             
-            Text(movie.overview)
-                .font(.custom("Inter-Regular", size: 15))
-                .foregroundColor(Color(hex: "#333333"))
-                .lineSpacing(4)
+            if !movie.overview.isEmpty {
+                Text(movie.overview)
+                    .font(.custom("Inter-Regular", size: 15))
+                    .foregroundColor(Color(hex: "#333333"))
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("No synopsis available")
+                    .font(.custom("Inter-Regular", size: 15))
+                    .foregroundColor(Color(hex: "#999999"))
+                    .italic()
+            }
         }
     }
     
     private func movieInfoSection(_ movie: MovieDetail) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Movie Info")
                 .font(.custom("Nunito-Bold", size: 20))
                 .foregroundColor(Color(hex: "#1A1A1A"))
-                .padding(.bottom, 16)
             
             VStack(spacing: 0) {
                 if let director = movie.director {
@@ -337,61 +349,20 @@ struct MoviePageView: View {
             }
             .background(Color.white)
             .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
         }
     }
     
     // MARK: - Cast Tab
     
     private var castTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Cast")
-                .font(.custom("Nunito-Bold", size: 20))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-                .padding(.horizontal, 20)
-            
-            if viewModel.displayedCast.isEmpty {
-                Text("No cast information available")
-                    .font(.custom("Inter-Regular", size: 15))
-                    .foregroundColor(Color(hex: "#666666"))
-                    .padding(.horizontal, 20)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.displayedCast) { member in
-                            CastMemberRow(member: member)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-            }
-        }
+        CastTabView(cast: viewModel.displayedCast)
     }
     
     // MARK: - Crew Tab
     
     private var crewTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Crew")
-                .font(.custom("Nunito-Bold", size: 20))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-                .padding(.horizontal, 20)
-            
-            if viewModel.displayedCrew.isEmpty {
-                Text("No crew information available")
-                    .font(.custom("Inter-Regular", size: 15))
-                    .foregroundColor(Color(hex: "#666666"))
-                    .padding(.horizontal, 20)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.displayedCrew) { member in
-                            CrewMemberRow(member: member)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-            }
-        }
+        CrewTabView(crew: viewModel.displayedCrew)
     }
     
     // MARK: - Reviews Tab (Placeholder)
@@ -501,96 +472,6 @@ struct InfoRow: View {
             Divider()
                 .padding(.leading, 128)
         }
-    }
-}
-
-struct CastMemberRow: View {
-    let member: CastMember
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Profile Image
-            if let profileURL = member.profileURL {
-                AsyncImage(url: profileURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Circle()
-                        .fill(Color(hex: "#E0E0E0"))
-                }
-                .frame(width: 60, height: 60)
-                .clipShape(Circle())
-            } else {
-                Circle()
-                    .fill(Color(hex: "#E0E0E0"))
-                    .frame(width: 60, height: 60)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .foregroundColor(Color(hex: "#999999"))
-                    )
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(member.name)
-                    .font(.custom("Inter-SemiBold", size: 15))
-                    .foregroundColor(Color(hex: "#1A1A1A"))
-                
-                Text(member.character)
-                    .font(.custom("Inter-Regular", size: 13))
-                    .foregroundColor(Color(hex: "#666666"))
-            }
-            
-            Spacer()
-        }
-        .padding(12)
-        .background(Color.white)
-        .cornerRadius(12)
-    }
-}
-
-struct CrewMemberRow: View {
-    let member: CrewMember
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Profile Image
-            if let profileURL = member.profileURL {
-                AsyncImage(url: profileURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Circle()
-                        .fill(Color(hex: "#E0E0E0"))
-                }
-                .frame(width: 60, height: 60)
-                .clipShape(Circle())
-            } else {
-                Circle()
-                    .fill(Color(hex: "#E0E0E0"))
-                    .frame(width: 60, height: 60)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .foregroundColor(Color(hex: "#999999"))
-                    )
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(member.name)
-                    .font(.custom("Inter-SemiBold", size: 15))
-                    .foregroundColor(Color(hex: "#1A1A1A"))
-                
-                Text(member.job)
-                    .font(.custom("Inter-Regular", size: 13))
-                    .foregroundColor(Color(hex: "#666666"))
-            }
-            
-            Spacer()
-        }
-        .padding(12)
-        .background(Color.white)
-        .cornerRadius(12)
     }
 }
 

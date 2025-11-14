@@ -2,7 +2,7 @@
 //  SearchView.swift
 //  TastyMangoes
 //
-//  Created by Claude on 11/13/25 at 9:32 PM
+//  Created by Claude on 11/14/25 at 9:59 AM
 //
 
 import SwiftUI
@@ -254,31 +254,13 @@ struct SearchMovieCard: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Poster
-            if let posterPath = movie.posterImageURL,
-               let posterURL = TMDBConfig.imageURL(path: posterPath, size: .poster_small) {
-                AsyncImage(url: posterURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 80, height: 120)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 80, height: 120)
-                    .cornerRadius(8)
-                    .overlay(
-                        Text("NO\nPOSTER")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                    )
-            }
+            // Poster with our custom component
+            MoviePosterImage(
+                posterURL: movie.posterImageURL,
+                width: 80,
+                height: 120,
+                cornerRadius: 8
+            )
             
             // Info
             VStack(alignment: .leading, spacing: 8) {
