@@ -1,8 +1,14 @@
 //
 //  CategoryItem.swift
-//  TastyMangoes
+//  Tasty Mangoes
 //
-//  Created by Tim Robinson on 11/13/25.
+//  Created by Claude on 11/13/25.
 //
 
 import Foundation
+
+struct CategoryItem: Identifiable {
+    let id = UUID()
+    let icon: String
+    let name: String
+}
