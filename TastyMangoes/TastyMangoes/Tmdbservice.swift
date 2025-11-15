@@ -2,7 +2,7 @@
 //  TMDBService.swift
 //  TastyMangoes
 //
-//  Created by Claude on 11/13/25 at 8:00 PM
+//  Fixed - 11/14/25 at 10:45 PM
 //
 
 import Foundation
@@ -34,7 +34,7 @@ enum TMDBError: Error, LocalizedError {
 
 // MARK: - TMDB Service
 
-actor TMDBService {
+class TMDBService {
     
     static let shared = TMDBService()
     

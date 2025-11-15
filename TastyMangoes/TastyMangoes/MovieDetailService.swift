@@ -2,7 +2,7 @@
 //  MovieDetailService.swift
 //  TastyMangoes
 //
-//  Created by Claude on 11/13/25 at 9:13 PM
+//  Fixed - 11/14/25 at 10:45 PM
 //
 
 import Foundation
@@ -32,13 +32,15 @@ enum MovieDetailError: Error, LocalizedError {
     }
 }
 
-actor MovieDetailService {
+class MovieDetailService {
     
     // MARK: - Properties
     
     static let shared = MovieDetailService()
-    private var cachedMovies: [Int: MovieDetail] = [:]
-    private var cachedMoviesByStringId: [String: MovieDetail] = [:]
+    
+    // Thread-safe cache using NSCache
+    private let movieCache = NSCache<NSNumber, MovieDetailWrapper>()
+    private let stringIdCache = NSCache<NSString, MovieDetailWrapper>()
     
     private init() {}
     
@@ -47,8 +49,8 @@ actor MovieDetailService {
     /// Fetch movie detail by Int ID
     func fetchMovieDetail(id: Int) async throws -> MovieDetail {
         // Check cache first
-        if let cached = cachedMovies[id] {
-            return cached
+        if let cached = movieCache.object(forKey: NSNumber(value: id)) {
+            return cached.movieDetail
         }
         
         // Try TMDB API first
@@ -56,7 +58,7 @@ actor MovieDetailService {
             let movieDetail = try await fetchFromTMDB(movieId: id)
             
             // Cache the result
-            cachedMovies[id] = movieDetail
+            movieCache.setObject(MovieDetailWrapper(movieDetail: movieDetail), forKey: NSNumber(value: id))
             
             return movieDetail
         } catch {
@@ -67,7 +69,7 @@ actor MovieDetailService {
         let movie = try await loadFromJSON(id: id)
         
         // Cache the result
-        cachedMovies[id] = movie
+        movieCache.setObject(MovieDetailWrapper(movieDetail: movie), forKey: NSNumber(value: id))
         
         return movie
     }
@@ -75,8 +77,8 @@ actor MovieDetailService {
     /// Fetch movie detail by String ID
     func fetchMovieDetail(stringId: String) async throws -> MovieDetail {
         // Check cache first
-        if let cached = cachedMoviesByStringId[stringId] {
-            return cached
+        if let cached = stringIdCache.object(forKey: stringId as NSString) {
+            return cached.movieDetail
         }
         
         // Try to convert string ID to Int for TMDB API
@@ -86,8 +88,8 @@ actor MovieDetailService {
                 let movieDetail = try await fetchFromTMDB(movieId: movieId)
                 
                 // Cache the result
-                cachedMoviesByStringId[stringId] = movieDetail
-                cachedMovies[movieId] = movieDetail
+                stringIdCache.setObject(MovieDetailWrapper(movieDetail: movieDetail), forKey: stringId as NSString)
+                movieCache.setObject(MovieDetailWrapper(movieDetail: movieDetail), forKey: NSNumber(value: movieId))
                 
                 return movieDetail
             } catch {
@@ -99,10 +101,7 @@ actor MovieDetailService {
         let movie = try await loadFromJSON(stringId: stringId)
         
         // Cache the result
-        cachedMoviesByStringId[stringId] = movie
-        if let intId = movie.stringId?.hashValue {
-            cachedMovies[intId] = movie
-        }
+        stringIdCache.setObject(MovieDetailWrapper(movieDetail: movie), forKey: stringId as NSString)
         
         return movie
     }
@@ -113,7 +112,7 @@ actor MovieDetailService {
         
         // Cache all movies
         for movie in movies {
-            cachedMovies[movie.id] = movie
+            movieCache.setObject(MovieDetailWrapper(movieDetail: movie), forKey: NSNumber(value: movie.id))
         }
         
         return movies
@@ -121,8 +120,8 @@ actor MovieDetailService {
     
     /// Clear the cache
     func clearCache() {
-        cachedMovies.removeAll()
-        cachedMoviesByStringId.removeAll()
+        movieCache.removeAllObjects()
+        stringIdCache.removeAllObjects()
     }
     
     // MARK: - Private Methods - TMDB API
@@ -213,6 +212,16 @@ actor MovieDetailService {
         } catch {
             throw MovieDetailError.decodingError(error)
         }
+    }
+}
+
+// MARK: - Cache Wrapper
+
+private class MovieDetailWrapper {
+    let movieDetail: MovieDetail
+    
+    init(movieDetail: MovieDetail) {
+        self.movieDetail = movieDetail
     }
 }
 

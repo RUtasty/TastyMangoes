@@ -2,7 +2,7 @@
 //  MoviePageView.swift
 //  TastyMangoes
 //
-//  Polished by Claude on 11/14/25 at 10:18 AM
+//  Updated with exact Figma icons - 11/14/25 at 11:15 PM really 10:28pm
 //
 
 import SwiftUI
@@ -56,7 +56,7 @@ struct MoviePageView: View {
                 .foregroundColor(Color(hex: "#666666"))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(hex: "#F5F5F5"))
+        .background(Color(hex: "#fdfdfd"))
     }
     
     // MARK: - Error View
@@ -83,12 +83,12 @@ struct MoviePageView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 32)
                     .padding(.vertical, 12)
-                    .background(Color(hex: "#8B5CF6"))
+                    .background(Color(hex: "#333333"))
                     .cornerRadius(8)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(hex: "#F5F5F5"))
+        .background(Color(hex: "#fdfdfd"))
     }
     
     // MARK: - Movie Content
@@ -96,7 +96,7 @@ struct MoviePageView: View {
     private func movieContent(_ movie: MovieDetail) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Header with backdrop and poster
+                // Header with video, poster, and scores
                 headerSection(movie)
                 
                 // Tab Navigation
@@ -106,7 +106,7 @@ struct MoviePageView: View {
                 tabContentSection(movie)
             }
         }
-        .background(Color(hex: "#F5F5F5"))
+        .background(Color(hex: "#fdfdfd"))
         .ignoresSafeArea(edges: .top)
         .overlay(alignment: .topLeading) {
             backButton
@@ -116,35 +116,49 @@ struct MoviePageView: View {
     // MARK: - Header Section
     
     private func headerSection(_ movie: MovieDetail) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            // Backdrop Image
-            if let backdropURL = movie.backdropURL {
-                AsyncImage(url: backdropURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(hex: "#1A1A1A"))
+        VStack(spacing: 0) {
+            // Video/Trailer Section
+            ZStack(alignment: .topLeading) {
+                // Backdrop/Trailer Image
+                if let backdropURL = movie.backdropURL {
+                    AsyncImage(url: backdropURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color(hex: "#1A1A1A"))
+                    }
+                    .frame(height: 193)
+                    .clipped()
                 }
-                .frame(height: 280)
-                .clipped()
+                
+                // Play Trailer Button
+                HStack(spacing: 6) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#f3f3f3"))
+                    
+                    Text("Play Trailer")
+                        .font(.custom("Nunito-Bold", size: 12))
+                        .foregroundColor(Color(hex: "#f3f3f3"))
+                    
+                    Text("4:20")
+                        .font(.custom("Inter-Regular", size: 12))
+                        .foregroundColor(Color(hex: "#ececec"))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .padding(.top, 12)
+                .padding(.leading, 12)
             }
+            .frame(height: 193)
+            .cornerRadius(8)
+            .padding(.horizontal, 16)
             
-            // Gradient Overlay
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0),
-                    Color.black.opacity(0.7)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 280)
-            
-            // Poster and Title
+            // Poster and Scores Section - overlapping video
             HStack(alignment: .bottom, spacing: 16) {
-                // Poster
+                // Poster - drops down
                 if let posterURL = movie.posterURL {
                     AsyncImage(url: posterURL) { image in
                         image
@@ -154,53 +168,160 @@ struct MoviePageView: View {
                         Rectangle()
                             .fill(Color(hex: "#333333"))
                     }
-                    .frame(width: 100, height: 150)
+                    .frame(width: 84, height: 124)
                     .cornerRadius(8)
-                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
                 
-                // Title and Info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(movie.title)
-                        .font(.custom("Nunito-Bold", size: 24))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                    
-                    HStack(spacing: 8) {
-                        Text(movie.releaseYear)
-                            .font(.custom("Inter-Regular", size: 14))
-                            .foregroundColor(Color.white.opacity(0.8))
-                        
-                        if let rating = movie.rating {
-                            Text("•")
-                                .foregroundColor(Color.white.opacity(0.8))
-                            Text(rating)
-                                .font(.custom("Inter-Regular", size: 14))
-                                .foregroundColor(Color.white.opacity(0.8))
+                // Scores Section
+                HStack(spacing: 0) {
+                    // Tasty Score
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 2) {
+                            MangoLogoIcon(size: 16.667)
+                            Text("Tasty Score")
+                                .font(.custom("Inter-Regular", size: 12))
+                                .foregroundColor(Color(hex: "#666666"))
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#666666"))
                         }
                         
-                        if let runtime = movie.runtime {
-                            Text("•")
-                                .foregroundColor(Color.white.opacity(0.8))
-                            Text(movie.formattedRuntime)
-                                .font(.custom("Inter-Regular", size: 14))
-                                .foregroundColor(Color.white.opacity(0.8))
+                        if let tastyScore = movie.tastyScore {
+                            Text(String(format: "%.0f%%", tastyScore))
+                                .font(.custom("Nunito-Bold", size: 20))
+                                .foregroundColor(Color(hex: "#1a1a1a"))
                         }
                     }
                     
-                    // Genres
-                    Text(movie.genresList)
-                        .font(.custom("Inter-Regular", size: 12))
-                        .foregroundColor(Color.white.opacity(0.7))
-                        .lineLimit(1)
+                    // Divider
+                    Rectangle()
+                        .fill(Color(hex: "#ececec"))
+                        .frame(width: 1, height: 40)
+                        .padding(.horizontal, 12)
+                    
+                    // AI Score
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 2) {
+                            AIFilledIcon(size: 20)
+                            Text("AI Score")
+                                .font(.custom("Inter-Regular", size: 12))
+                                .foregroundColor(Color(hex: "#666666"))
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#666666"))
+                        }
+                        
+                        if let aiScore = movie.aiScore {
+                            Text(String(format: "%.1f", aiScore))
+                                .font(.custom("Nunito-Bold", size: 20))
+                                .foregroundColor(Color(hex: "#1a1a1a"))
+                        }
+                    }
                 }
+                .padding(.bottom, 8)
                 
                 Spacer()
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 16)
+            .padding(.horizontal, 28)
+            .offset(y: -58)
+            
+            // Mango's Tips and Cards Section
+            VStack(alignment: .leading, spacing: 12) {
+                // Mango's Tips Badge and Text
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 4) {
+                        AIFilledIcon(size: 16)
+                        Text("MANGO'S TIPS")
+                            .font(.custom("Nunito-SemiBold", size: 12))
+                            .foregroundColor(Color(hex: "#648d00"))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9999)
+                            .stroke(Color(hex: "#f7c200"), lineWidth: 1)
+                    )
+                    .cornerRadius(9999)
+                    
+                    (Text("You've been into courtroom dramas lately, and your friends loved this one — Juror #2 might be your next binge. It's smart, tense, and full... ")
+                        .font(.custom("Inter-Regular", size: 14))
+                        .foregroundColor(Color(hex: "#333333"))
+                    +
+                    Text("Read More")
+                        .font(.custom("Inter-SemiBold", size: 14))
+                        .foregroundColor(Color(hex: "#b56900"))
+                        .underline())
+                        .lineLimit(2)
+                }
+                
+                // Watch On and Liked By Cards
+                HStack(spacing: 4) {
+                    // Watch On Card
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Watch on:")
+                                .font(.custom("Nunito-Bold", size: 12))
+                                .foregroundColor(Color(hex: "#333333"))
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10))
+                                .foregroundColor(.black)
+                        }
+                        
+                        HStack(spacing: -6) {
+                            ForEach(0..<3) { _ in
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color(hex: "#fdfdfd"), lineWidth: 2)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 0)
+                    
+                    // Liked By Card
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Liked by:")
+                                .font(.custom("Nunito-Bold", size: 12))
+                                .foregroundColor(Color(hex: "#333333"))
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10))
+                                .foregroundColor(.black)
+                        }
+                        
+                        HStack(spacing: -6) {
+                            ForEach(0..<3) { _ in
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color(hex: "#fdfdfd"), lineWidth: 2)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 0)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, -40)
         }
-        .frame(height: 280)
     }
     
     // MARK: - Back Button
@@ -222,7 +343,7 @@ struct MoviePageView: View {
     
     private var tabNavigationSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 24) {
+            HStack(spacing: 0) {
                 ForEach(MovieTab.allCases) { tab in
                     TabButton(
                         title: tab.rawValue,
@@ -231,8 +352,8 @@ struct MoviePageView: View {
                     )
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 0)
         }
         .background(Color.white)
         .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
@@ -261,95 +382,74 @@ struct MoviePageView: View {
     // MARK: - Overview Tab
     
     private func overviewTab(_ movie: MovieDetail) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Scores Section
-                scoresSection(movie)
-                
-                // Synopsis
-                synopsisSection(movie)
-                
-                // Movie Info
-                movieInfoSection(movie)
-                
-                Spacer(minLength: 60)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
+        VStack(alignment: .leading, spacing: 16) {
+            // Synopsis
+            synopsisSection(movie)
+            
+            // Genre badges
+            genreBadgesSection(movie)
+            
+            // Movie Info
+            movieInfoSection(movie)
+            
+            Spacer(minLength: 60)
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
         .background(Color(hex: "#FDFDFD"))
     }
     
-    private func scoresSection(_ movie: MovieDetail) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Scores")
-                .font(.custom("Nunito-Bold", size: 20))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-            
-            HStack(spacing: 12) {
-                if let tastyScore = movie.tastyScore {
-                    ScoreCard(label: "Tasty", score: String(format: "%.0f", tastyScore), color: Color(hex: "#8B5CF6"))
-                }
-                if let aiScore = movie.aiScore {
-                    ScoreCard(label: "AI", score: String(format: "%.0f", aiScore), color: Color(hex: "#3B82F6"))
-                }
-                if let criticsScore = movie.criticsScore {
-                    ScoreCard(label: "Critics", score: String(format: "%.0f", criticsScore), color: Color(hex: "#10B981"))
-                }
-                if let audienceScore = movie.audienceScore {
-                    ScoreCard(label: "Audience", score: String(format: "%.0f", audienceScore), color: Color(hex: "#F59E0B"))
-                }
-            }
-        }
-    }
-    
     private func synopsisSection(_ movie: MovieDetail) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Synopsis")
-                .font(.custom("Nunito-Bold", size: 20))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-            
+        VStack(alignment: .leading, spacing: 8) {
             if !movie.overview.isEmpty {
                 Text(movie.overview)
-                    .font(.custom("Inter-Regular", size: 15))
+                    .font(.custom("Inter-Regular", size: 14))
                     .foregroundColor(Color(hex: "#333333"))
-                    .lineSpacing(6)
+                    .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("No synopsis available")
-                    .font(.custom("Inter-Regular", size: 15))
+                    .font(.custom("Inter-Regular", size: 14))
                     .foregroundColor(Color(hex: "#999999"))
                     .italic()
             }
         }
     }
     
-    private func movieInfoSection(_ movie: MovieDetail) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Movie Info")
-                .font(.custom("Nunito-Bold", size: 20))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-            
-            VStack(spacing: 0) {
-                if let director = movie.director {
-                    InfoRow(label: "Director", value: director)
-                }
-                
-                let writers = viewModel.writersNames
-                if !writers.isEmpty {
-                    InfoRow(label: "Writer", value: writers)
-                }
-                
-                if let runtime = movie.runtime {
-                    InfoRow(label: "Running time", value: movie.formattedRuntime)
-                }
-                
-                InfoRow(label: "Budget", value: movie.formattedBudget)
-                InfoRow(label: "Revenue", value: movie.formattedRevenue)
+    private func genreBadgesSection(_ movie: MovieDetail) -> some View {
+        HStack(spacing: 4) {
+            ForEach(movie.genres, id: \.id) { genre in
+                Text(genre.name)
+                    .font(.custom("Nunito-Bold", size: 14))
+                    .foregroundColor(Color(hex: "#332100"))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "#ffedcc"))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9999)
+                            .stroke(Color(hex: "#ffdb99"), lineWidth: 1)
+                    )
+                    .cornerRadius(9999)
             }
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
+            Spacer()
+        }
+    }
+    
+    private func movieInfoSection(_ movie: MovieDetail) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let runtime = movie.runtime {
+                InfoRow(label: "Running time", value: movie.formattedRuntime)
+            }
+            
+            if !movie.releaseDate.isEmpty {
+                InfoRow(label: "Release dates", value: movie.releaseDate)
+            }
+            
+            InfoRow(label: "Country", value: "United States")
+            
+            if let rating = movie.rating {
+                InfoRow(label: "Age restrictions", value: rating)
+            }
         }
     }
     
@@ -405,47 +505,19 @@ struct TabButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Text(title)
-                    .font(.custom("Inter-SemiBold", size: 15))
-                    .foregroundColor(isSelected ? Color(hex: "#8B5CF6") : Color(hex: "#666666"))
+                    .font(.custom("Nunito-Bold", size: 14))
+                    .foregroundColor(isSelected ? Color(hex: "#333333") : Color(hex: "#666666"))
+                    .padding(.bottom, 8)
                 
                 Rectangle()
-                    .fill(isSelected ? Color(hex: "#8B5CF6") : Color.clear)
-                    .frame(height: 3)
+                    .fill(isSelected ? Color(hex: "#FEA500") : Color.clear)
+                    .frame(height: 2)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-    }
-}
-
-struct ScoreCard: View {
-    let label: String
-    let score: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                
-                Text(label)
-                    .font(.custom("Inter-Regular", size: 12))
-                    .foregroundColor(Color(hex: "#666666"))
-            }
-            
-            Text(score)
-                .font(.custom("Nunito-Bold", size: 24))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
     }
 }
 
@@ -459,24 +531,21 @@ struct InfoRow: View {
                 Text(label)
                     .font(.custom("Inter-SemiBold", size: 14))
                     .foregroundColor(Color(hex: "#666666"))
-                    .frame(width: 100, alignment: .leading)
+                    .frame(width: 120, alignment: .leading)
                 
                 Text(value)
                     .font(.custom("Inter-Regular", size: 14))
-                    .foregroundColor(Color(hex: "#1A1A1A"))
+                    .foregroundColor(Color(hex: "#333333"))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 0)
+            .padding(.vertical, 12)
             
             Divider()
-                .padding(.leading, 128)
+                .background(Color(hex: "#ececec"))
         }
     }
 }
-
-// MARK: - Color Extension
-// Note: Color hex extension already exists in Color+Hex.swift
 
 // MARK: - Previews
 
