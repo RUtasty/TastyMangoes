@@ -1,0 +1,32 @@
+# Cursor Rules for TastyMangoes Project
+
+## File Header Requirements
+
+**CRITICAL**: When creating or modifying ANY file in this project, ALWAYS prepend a standard header at the very top of the file with this exact format:
+
+```
+//  <FileName>
+//  Created automatically by Cursor Assistant
+//  Created on: <current local date> at <current local time> (California time)
+//  Notes: <brief synopsis of what we're trying to fix/implement with this build>
+```
+
+### Header Format Rules:
+1. Replace `<FileName>` with the actual name of the file being generated/modified
+2. Always use the current date and time in the **America/Los_Angeles** timezone (IANA identifier). This will automatically reflect PST or PDT depending on the date, correctly handling daylight saving time transitions.
+3. Replace `<brief synopsis...>` with a concise description of what the file is for or what issue/feature it addresses
+4. Apply this rule to ALL file types: Swift files, JSON files, Markdown files, configuration files, etc.
+5. Only skip this header if the user explicitly says otherwise
+
+### Example:
+```
+//  MoviePageView.swift
+//  Created automatically by Cursor Assistant
+//  Created on: 2025-01-15 at 14:30 (America/Los_Angeles - Pacific Time)
+//  Notes: Fixed horizontal section bar to remain pinned at top while scrolling
+```
+
+**Note:** The timezone `America/Los_Angeles` automatically handles PST (Pacific Standard Time) and PDT (Pacific Daylight Time) transitions, so timestamps will correctly reflect the current Pacific Time regardless of daylight saving time.
+
+This header must be the FIRST thing in every file, before any imports, package declarations, or other code.
+

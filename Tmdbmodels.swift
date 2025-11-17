@@ -1,0 +1,212 @@
+//
+//  TMDBModels.swift
+//  TastyMangoes
+//
+//  Created by Claude on 11/13/25 at 8:00 PM
+//
+
+import Foundation
+
+// MARK: - TMDB API Response Models
+
+/// Response from TMDB movie search
+struct TMDBSearchResponse: Codable {
+    let page: Int
+    let results: [TMDBMovie]
+    let totalPages: Int
+    let totalResults: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case page, results
+        case totalPages = "total_pages"
+        case totalResults = "total_results"
+    }
+}
+
+/// Basic movie info from TMDB (used in search results, lists)
+struct TMDBMovie: Codable {
+    let id: Int
+    let title: String
+    let originalTitle: String?
+    let overview: String?
+    let posterPath: String?
+    let backdropPath: String?
+    let releaseDate: String?
+    let voteAverage: Double?
+    let voteCount: Int?
+    let popularity: Double?
+    let genreIds: [Int]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, overview, popularity
+        case originalTitle = "original_title"
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case releaseDate = "release_date"
+        case voteAverage = "vote_average"
+        case voteCount = "vote_count"
+        case genreIds = "genre_ids"
+    }
+}
+
+/// Full movie details from TMDB
+struct TMDBMovieDetail: Codable {
+    let id: Int
+    let title: String
+    let originalTitle: String?
+    let overview: String?
+    let posterPath: String?
+    let backdropPath: String?
+    let releaseDate: String?
+    let runtime: Int?
+    let genres: [TMDBGenre]?
+    let voteAverage: Double?
+    let voteCount: Int?
+    let popularity: Double?
+    let budget: Int?
+    let revenue: Int?
+    let tagline: String?
+    let status: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, overview, runtime, genres, popularity, budget, revenue, tagline, status
+        case originalTitle = "original_title"
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case releaseDate = "release_date"
+        case voteAverage = "vote_average"
+        case voteCount = "vote_count"
+    }
+}
+
+/// Genre from TMDB
+struct TMDBGenre: Codable {
+    let id: Int
+    let name: String
+}
+
+/// Movie credits response from TMDB
+struct TMDBCredits: Codable {
+    let id: Int
+    let cast: [TMDBCast]
+    let crew: [TMDBCrew]
+}
+
+/// Cast member from TMDB
+struct TMDBCast: Codable {
+    let id: Int
+    let name: String
+    let character: String
+    let profilePath: String?
+    let order: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, character, order
+        case profilePath = "profile_path"
+    }
+}
+
+/// Crew member from TMDB
+struct TMDBCrew: Codable {
+    let id: Int
+    let name: String
+    let job: String
+    let department: String
+    let profilePath: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, job, department
+        case profilePath = "profile_path"
+    }
+}
+
+// MARK: - Conversion to App Models
+
+extension TMDBMovie {
+    /// Convert TMDB movie to our lightweight Movie model
+    func toMovie() -> Movie {
+        return Movie(
+            id: String(id),
+            title: title,
+            year: extractYear(from: releaseDate),
+            trailerURL: nil,
+            trailerDuration: nil,
+            posterImageURL: posterPath,
+            tastyScore: nil, // We'll calculate this later
+            aiScore: voteAverage,
+            genres: [], // Genre names come from a separate API call
+            rating: nil,
+            director: nil,
+            runtime: nil,
+            releaseDate: releaseDate,
+            language: nil,
+            overview: overview
+        )
+    }
+    
+    private func extractYear(from dateString: String?) -> Int {
+        guard let dateString = dateString,
+              let year = Int(dateString.prefix(4)) else {
+            return 0
+        }
+        return year
+    }
+}
+
+extension TMDBMovieDetail {
+    /// Convert TMDB movie detail to our MovieDetail model
+    func toMovieDetail(credits: TMDBCredits? = nil) -> MovieDetail {
+        let director = credits?.crew.first(where: { $0.job == "Director" })?.name
+        
+        let castMembers = credits?.cast.prefix(20).map { tmdbCast in
+            CastMember(
+                id: tmdbCast.id,
+                name: tmdbCast.name,
+                character: tmdbCast.character,
+                profilePath: tmdbCast.profilePath,
+                order: tmdbCast.order
+            )
+        }
+        
+        let crewMembers = credits?.crew.prefix(20).map { tmdbCrew in
+            CrewMember(
+                id: tmdbCrew.id,
+                name: tmdbCrew.name,
+                job: tmdbCrew.job,
+                department: tmdbCrew.department,
+                profilePath: tmdbCrew.profilePath
+            )
+        }
+        
+        let genreObjects = genres?.map { Genre(id: $0.id, name: $0.name) } ?? []
+        
+        return MovieDetail(
+            id: id,
+            title: title,
+            originalTitle: originalTitle,
+            overview: overview ?? "",
+            releaseDate: releaseDate ?? "",
+            posterPath: posterPath,
+            backdropPath: backdropPath,
+            runtime: runtime,
+            genres: genreObjects,
+            director: director,
+            rating: nil, // TMDB doesn't provide MPAA ratings in basic API
+            tastyScore: nil, // We'll calculate this
+            aiScore: voteAverage,
+            criticsScore: nil,
+            audienceScore: voteAverage, // Use TMDB score as audience score
+            trailerURL: nil, // Would need separate videos API call
+            trailerDuration: nil,
+            cast: castMembers,
+            crew: crewMembers,
+            budget: budget,
+            revenue: revenue,
+            tagline: tagline,
+            status: status,
+            voteAverage: voteAverage,
+            voteCount: voteCount,
+            popularity: popularity
+        )
+    }
+}
