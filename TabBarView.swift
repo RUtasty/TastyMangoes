@@ -2,75 +2,93 @@
 //  TabBarView.swift
 //  TastyMangoes
 //
-//  Rewritten to fix scroll-gesture conflicts with MoviePageView
-//  Last updated on 2025-11-16 at 02:10 (California time)
+//  Created automatically by Cursor Assistant on 2025-11-18 at 11:05 (America/Los_Angeles).
+//  Notes: Root tab container with custom tab bar and floating Talk to Mango button.
 //
 
 import SwiftUI
 
 struct TabBarView: View {
-    @State private var selectedTab = 0   // Default to Home
-    
+    @State private var selectedTab = 0          // 0 = Home
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            
-            // MARK: - Tab Content (NO TabView – manual switcher)
-            Group {
-                switch selectedTab {
-                case 0:
-                    HomeView()
-                case 1:
-                    SearchView()
-                case 2:
-                    // Placeholder for AI chat / Talk to Mango
-                    Color(.systemBackground)
-                        .overlay(
-                            Text("Talk to Mango (Coming Soon)")
-                                .font(.title3)
-                                .foregroundColor(.gray)
-                        )
-                case 3:
-                    WatchlistView()
-                case 4:
-                    MoreView()
-                default:
-                    SearchView()
+        ZStack {
+            // Main content with a bottom inset where we draw the custom tab bar
+            currentTabView
+                .safeAreaInset(edge: .bottom) {
+                    CustomTabBar(selectedTab: $selectedTab)
                 }
+
+            // Floating Mango button – always visible for now
+            VStack {
+                Spacer()
+                TalkToMangoButton {
+                    selectedTab = 2
+                }
+                .padding(.bottom, 32)
             }
-            .ignoresSafeArea(.container, edges: .bottom)
-            
-            // MARK: - Custom Tab Bar
-            CustomTabBar(selectedTab: $selectedTab)
+            .ignoresSafeArea(edges: .bottom)
         }
         .ignoresSafeArea(.keyboard)
     }
+
+    // MARK: - Current Tab
+
+    @ViewBuilder
+    private var currentTabView: some View {
+        switch selectedTab {
+        case 0:
+            HomeView()                        // your existing HomeView.swift
+
+        case 1:
+            SearchView()                      // cleaned-up Search screen
+
+        case 2:
+            // Placeholder for Talk to Mango / AI chat
+            Color(.systemBackground)
+                .overlay(
+                    Text("Talk to Mango (Coming Soon)")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                )
+
+        case 3:
+            WatchlistView()                   // your existing WatchlistView.swift
+
+        case 4:
+            MoreView()                        // your existing MoreView.swift
+
+        default:
+            SearchView()
+        }
+    }
 }
+
+// MARK: - Custom Tab Bar
 
 struct CustomTabBar: View {
     @Binding var selectedTab: Int
-    
+
     var body: some View {
         ZStack {
-            // Tab bar background with gradient top border
+            // Background
             VStack(spacing: 0) {
-                // Gradient border at top
                 LinearGradient(
                     colors: [
-                        Color(red: 255/255, green: 237/255, blue: 204/255),
-                        Color(red: 255/255, green: 237/255, blue: 204/255)
+                        Color.black.opacity(0.06),
+                        Color.black.opacity(0.0)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .frame(height: 1)
-                
-                // White background
+
                 Color.white
                     .frame(height: 60)
             }
             .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: -2)
-            
-            // Tab items
+
+            // Items
             HStack(spacing: 0) {
                 TabBarItem(
                     icon: "house.fill",
@@ -79,7 +97,7 @@ struct CustomTabBar: View {
                 ) {
                     selectedTab = 0
                 }
-                
+
                 TabBarItem(
                     icon: "magnifyingglass",
                     label: "Search",
@@ -87,11 +105,9 @@ struct CustomTabBar: View {
                 ) {
                     selectedTab = 1
                 }
-                
-                // Center spacer for AI button
-                Spacer()
-                    .frame(width: 88)
-                
+
+                Spacer().frame(width: 56)   // gap for Mango button
+
                 TabBarItem(
                     icon: "list.bullet",
                     label: "Watchlist",
@@ -99,7 +115,7 @@ struct CustomTabBar: View {
                 ) {
                     selectedTab = 3
                 }
-                
+
                 TabBarItem(
                     icon: "ellipsis",
                     label: "More",
@@ -110,116 +126,65 @@ struct CustomTabBar: View {
             }
             .frame(height: 60)
             .padding(.horizontal, 16)
-            
-            // Floating AI Button (Talk to Mango) - prominent orange circular background
-            VStack {
-                Spacer()
-                
-                Button {
-                    selectedTab = 2
-                } label: {
-                    ZStack {
-                        // Prominent filled orange circular background with gradient
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(hex: "#FFA500"),
-                                        Color(hex: "#FF8C00")
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 56, height: 56)
-                            .overlay(
-                                // Border with white opacity
-                                Circle()
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    .frame(width: 56, height: 56)
-                            )
-                            .overlay(
-                                // Inner shadow/glow effect
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.4),
-                                                Color.clear
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .center
-                                        )
-                                    )
-                                    .frame(width: 56, height: 56)
-                                    .blendMode(.overlay)
-                            )
-                        
-                        // White mango logo icon inside the circle (matches Figma)
-                        MangoLogoIcon(size: 28, color: .white)
-                    }
-                    .shadow(color: Color(hex: "#FFA500").opacity(0.4), radius: 12, x: 0, y: 4)
-                }
-                .offset(y: -34)
-                
-                // Label below button
-                Text("Talk to Mango")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(red: 153/255, green: 153/255, blue: 153/255))
-                    .offset(y: -24)
-            }
         }
-        .frame(height: 60)
     }
 }
+
+// MARK: - Floating Talk to Mango Button
+
+struct TalkToMangoButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "#FFA500"),
+                                Color(hex: "#FF8C00")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+        }
+    }
+}
+
+// MARK: - Tab Bar Item
 
 struct TabBarItem: View {
     let icon: String
     let label: String
     let isSelected: Bool
     let action: () -> Void
-    
-    // Computed property for icon name based on selection state
-    private var iconName: String {
-        if isSelected {
-            if icon == "magnifyingglass" { return "magnifyingglass.fill" }
-            if icon == "house.fill" { return "house.fill" }
-            if icon == "list.bullet" { return "list.bullet" }
-            return icon
-        }
-        // For outline versions when not selected
-        if icon == "house.fill" { return "house" }
-        return icon
-    }
-    
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                // Use filled icon when selected, outline when not
-                Image(systemName: iconName)
-                    .font(.system(size: 17))
-                    .foregroundColor(isSelected ? Color(red: 65/255, green: 65/255, blue: 65/255) : Color(red: 153/255, green: 153/255, blue: 153/255))
-                
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(isSelected ? Color(hex: "#FEA500") : Color(hex: "#999999"))
+
                 Text(label)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(isSelected ? Color(red: 51/255, green: 51/255, blue: 51/255) : Color(red: 153/255, green: 153/255, blue: 153/255))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(isSelected ? Color(hex: "#FEA500") : Color(hex: "#999999"))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-        }
-    }
-}
-
-
-// WatchlistView is now in its own file
-
-struct MoreView: View {
-    var body: some View {
-        ZStack {
-            Color(red: 253/255, green: 253/255, blue: 253/255)
-                .ignoresSafeArea()
-            Text("More")
-                .font(.largeTitle)
+            .padding(.top, 8)
         }
     }
 }

@@ -1,78 +1,55 @@
+//
 //  SearchFilterState.swift
-//  Created automatically by Cursor Assistant
-//  Created on: 2025-01-15 at 14:30 (America/Los_Angeles - Pacific Time)
-//  Last modified: 2025-11-17 at 05:18 (America/Los_Angeles - Pacific Time)
-//  Notes: Created centralized filter state management for search functionality with platform and genre filtering. Updated to use yearRange (ClosedRange<Int>) instead of yearFrom/yearTo strings, matching WatchlistFilterState pattern. Changed default sortBy to "List order".
+//  TastyMangoes
+//
+//  Created automatically by ChatGPT on 2025-11-18 at 17:58 (America/Los_Angeles).
+//  Notes: Shared observable state for Search filters (platforms, genres,
+//         scores, years, liked-by, and actors). Used by SearchView,
+//         SearchFiltersBottomSheet, and SearchFilterDetailSheet.
+//
 
 import Foundation
 import SwiftUI
 import Combine
 
-@MainActor
-class SearchFilterState: ObservableObject {
+final class SearchFilterState: ObservableObject {
+    // Shared singleton instance used across Search screens
     static let shared = SearchFilterState()
-    
-    // MARK: - Published Properties
-    
-    @Published var selectedPlatforms: Set<String> = []
-    @Published var selectedGenres: Set<String> = []
-    @Published var sortBy: String = "List order"
-    @Published var tastyScoreRange: ClosedRange<Double> = 0...100
-    @Published var aiScoreRange: ClosedRange<Double> = 0...10
-    @Published var watchedStatus: String = "Any"
-    @Published var yearRange: ClosedRange<Int> = 1925...2025
-    @Published var likedBy: String = "Any"
-    @Published var actors: String = ""
-    
-    // MARK: - Computed Properties
-    
-    var hasActiveFilters: Bool {
-        !selectedPlatforms.isEmpty || !selectedGenres.isEmpty || 
-        sortBy != "List order" || watchedStatus != "Any" ||
-        yearRange != (1925...2025) || likedBy != "Any" || !actors.isEmpty ||
-        tastyScoreRange != (0...100) || aiScoreRange != (0...10)
-    }
-    
-    var platformFilterText: String {
-        if selectedPlatforms.isEmpty {
-            return "Platform: Any"
-        } else if selectedPlatforms.count == 1 {
-            return "Platform: \(selectedPlatforms.first ?? "")"
-        } else {
-            return "Platform: \(selectedPlatforms.count)+"
-        }
-    }
-    
-    var genreFilterText: String {
-        if selectedGenres.isEmpty {
-            return "Genres: Any"
-        } else if selectedGenres.count == 1 {
-            return "Genres: \(selectedGenres.first ?? "")"
-        } else {
-            return "Genres: \(selectedGenres.count)+"
-        }
-    }
-    
-    // MARK: - Methods
-    
-    func clearAllFilters() {
-        selectedPlatforms = []
-        selectedGenres = []
-        sortBy = "List order"
-        tastyScoreRange = 0...100
-        aiScoreRange = 0...10
-        watchedStatus = "Any"
-        yearRange = 1925...2025
-        likedBy = "Any"
-        actors = ""
-    }
-    
-    func clearPlatformFilters() {
-        selectedPlatforms = []
-    }
-    
-    func clearGenreFilters() {
-        selectedGenres = []
-    }
-}
 
+    // MARK: - Sort / ordering
+
+    /// Selected sort option (e.g. "List order", "Tasty Score", etc.)
+    @Published var sortBy: String = "List order"
+
+    // MARK: - Platforms & Genres
+
+    /// Selected streaming platforms (e.g. ["Netflix", "Prime Video"])
+    @Published var selectedPlatforms: Set<String> = []
+
+    /// Selected genres (e.g. ["Action", "Drama"])
+    @Published var selectedGenres: Set<String> = []
+
+    // MARK: - Scores
+
+    /// Allowed range for Tasty Score (0–100)
+    @Published var tastyScoreRange: ClosedRange<Int> = 0...100
+
+    /// Allowed range for AI Score (0–10)
+    @Published var aiScoreRange: ClosedRange<Int> = 0...10
+
+    // MARK: - Release Year
+
+    /// Allowed release year range (1925–2025 by default)
+    @Published var yearRange: ClosedRange<Int> = 1925...2025
+
+    // MARK: - Social / People
+
+    /// "Any", "Friends", etc.
+    @Published var likedBy: String = "Any"
+
+    /// Free-text actor search field.
+    @Published var actors: String = ""
+
+    // Private so everyone uses the shared singleton
+    private init() {}
+}

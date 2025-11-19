@@ -1,0 +1,24 @@
+---
+alwaysApply: true
+description: "Always enforce a consistent Swift file header format in the TastyMangoes project."
+---
+
+# TastyMangoes – Swift File Header Rule
+
+For **every Swift file** you create or modify in this project, follow these rules.
+
+---
+
+## 1. New Swift files
+
+When generating **any new Swift file**, always include this header at the very top of the file:
+
+```swift
+//
+//  <FileName>.swift
+//  TastyMangoes
+//
+//  Created automatically by Cursor Assistant on <YYYY-MM-DD> at <HH:MM> (America/Los_Angeles).
+//  Description: <short, clear one-line description of what this file does>
+//
+

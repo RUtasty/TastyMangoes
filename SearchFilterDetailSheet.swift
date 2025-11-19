@@ -1,382 +1,308 @@
+//
 //  SearchFilterDetailSheet.swift
-//  Created automatically by Cursor Assistant
-//  Created on: 2025-11-17 at 05:18 (America/Los_Angeles - Pacific Time)
-//  Last modified: 2025-11-17 at 05:25 (America/Los_Angeles - Pacific Time)
-//  Notes: Created generic filter detail sheet for search filters with support for different filter types (Sort by, Platform, Scores, Genres, Year, Liked by, Actors). Similar to WatchlistFilterDetailSheet but uses SearchFilterState. Removed duplicate RangeSlider, YearRangeSlider, and YearInputField components - these are already defined in WatchlistFilterDetailSheet.swift and accessible from the same module.
+//  TastyMangoes
+//
+//  Created automatically by ChatGPT on 2025-11-18 at 16:45 (America/Los_Angeles).
+//  Notes: Detail sheet for a single Search filter (Genres, Platform, Year, etc.).
+//         Bottom "Apply" button now shows an Apply (N) count for the current filter.
+//
 
 import SwiftUI
 
 struct SearchFilterDetailSheet: View {
-    let filterType: SearchFiltersBottomSheet.FilterType
+    enum FilterType {
+        case sortBy
+        case platform
+        case tastyScore
+        case aiScore
+        case genres
+        case year
+        case likedBy
+        case actors
+    }
+
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var filterState: SearchFilterState
-    
+    @ObservedObject private var filterState = SearchFilterState.shared
+
+    let filterType: FilterType
+    let title: String
+
     var body: some View {
         VStack(spacing: 0) {
-            // Drag Handle
-            VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(hex: "#b3b3b3"))
-                    .frame(width: 32, height: 4)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
+            // Grabber + Title
+            VStack(spacing: 8) {
+                Capsule()
+                    .fill(Color(hex: "#D8D8D8"))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 8)
+
+                Text(title)
+                    .font(.custom("Nunito-Bold", size: 18))
             }
-            
-            // Header
-            HStack {
-                Text(filterType.rawValue)
-                    .font(.custom("Nunito-Bold", size: 20))
-                    .foregroundColor(Color(hex: "#333333"))
-                
-                Spacer()
-                
-                Button(action: {
-                    clearFilter()
-                }) {
-                    Text("Clear")
-                        .font(.custom("Nunito-Bold", size: 14))
-                        .foregroundColor(Color(hex: "#414141"))
-                        .underline()
+            .padding(.bottom, 8)
+
+            // Content
+            Group {
+                switch filterType {
+                case .sortBy:
+                    sortByContent
+                case .platform:
+                    platformContent
+                case .tastyScore:
+                    scoreContent(
+                        title: "Tasty Score",
+                        range: $filterState.tastyScoreRange,
+                        maxValue: 100
+                    )
+                case .aiScore:
+                    scoreContent(
+                        title: "AI Score",
+                        range: $filterState.aiScoreRange,
+                        maxValue: 10
+                    )
+                case .genres:
+                    genresContent
+                case .year:
+                    yearContent
+                case .likedBy:
+                    likedByContent
+                case .actors:
+                    actorsContent
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 12)
-            
-            // Content
-            ScrollView {
-                filterContent
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
-            }
-            
-            // Apply Button
+
+            Spacer(minLength: 0)
+
+            // Apply Button with count
             VStack(spacing: 0) {
                 Divider()
                     .background(Color(hex: "#f3f3f3"))
-                
+
                 Button(action: {
                     dismiss()
                 }) {
-                    Text("Apply")
+                    Text(applyButtonTitle)
                         .font(.custom("Nunito-Bold", size: 14))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color(hex: "#333333"))
-                        .cornerRadius(8)
+                        .background(Color.black)
+                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
             }
+            .background(Color.white)
         }
-        .background(Color.white)
-        .cornerRadius(24, corners: [.topLeft, .topRight])
-        .presentationDetents([.height(500)])
-        .presentationDragIndicator(.hidden)
+        .background(Color(hex: "#F7F7F7"))
     }
-    
-    @ViewBuilder
-    private var filterContent: some View {
+
+    // MARK: - Apply button count for this filter
+
+    private var applyButtonTitle: String {
+        let count = selectionCountForCurrentFilter
+        if count > 0 {
+            return "Apply (\(count))"
+        } else {
+            return "Apply"
+        }
+    }
+
+    private var selectionCountForCurrentFilter: Int {
         switch filterType {
         case .sortBy:
-            sortByContent
+            return filterState.sortBy == "List order" ? 0 : 1
+
         case .platform:
-            platformContent
+            return filterState.selectedPlatforms.count
+
         case .tastyScore:
-            scoreContent(range: $filterState.tastyScoreRange, maxValue: 100)
+            return filterState.tastyScoreRange == 0...100 ? 0 : 1
+
         case .aiScore:
-            scoreContent(range: $filterState.aiScoreRange, maxValue: 10)
+            return filterState.aiScoreRange == 0...10 ? 0 : 1
+
         case .genres:
-            genresContent
+            return filterState.selectedGenres.count
+
         case .year:
-            yearContent
+            return filterState.yearRange == 1925...2025 ? 0 : 1
+
         case .likedBy:
-            likedByContent
+            return filterState.likedBy == "Any" ? 0 : 1
+
         case .actors:
-            actorsContent
+            let trimmed = filterState.actors.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty { return 0 }
+            let pieces = trimmed
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            return max(pieces.count, 1)
         }
     }
-    
-    // MARK: - Sort By Content
-    
+
+    // MARK: - Section Content
+
     private var sortByContent: some View {
-        VStack(spacing: 0) {
-            let options = ["List order", "Tasty Score", "AI Score", "Watched", "Year"]
-            ForEach(options, id: \.self) { option in
-                RadioButtonRow(
-                    title: option,
-                    isSelected: filterState.sortBy == option
-                ) {
-                    filterState.sortBy = option
+        List {
+            ForEach([
+                "List order",
+                "Tasty Score (high → low)",
+                "AI Score (high → low)",
+                "Newest first",
+                "Oldest first"
+            ], id: \.self) { option in
+                HStack {
+                    Text(option)
+                    Spacer()
+                    if filterState.sortBy == option {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(Color(hex: "#FEA500"))
+                    }
                 }
-                
-                if option != options.last {
-                    Divider()
-                        .background(Color(hex: "#f3f3f3"))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    filterState.sortBy = option
                 }
             }
         }
-        .padding(.top, 16)
+        .listStyle(.plain)
     }
-    
-    // MARK: - Platform Content
-    
+
     private var platformContent: some View {
-        VStack(spacing: 0) {
-            let platforms = ["Netflix", "Prime Video", "Disney+", "Max", "Apple TV+", "Hulu"]
-            ForEach(platforms, id: \.self) { platform in
-                CheckboxRow(
-                    title: platform,
-                    isSelected: filterState.selectedPlatforms.contains(platform)
-                ) {
+        List {
+            ForEach(["Netflix", "Prime Video", "Disney+", "Max", "Hulu"], id: \.self) { platform in
+                HStack {
+                    Text(platform)
+                    Spacer()
+                    if filterState.selectedPlatforms.contains(platform) {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(Color(hex: "#FEA500"))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
                     if filterState.selectedPlatforms.contains(platform) {
                         filterState.selectedPlatforms.remove(platform)
                     } else {
                         filterState.selectedPlatforms.insert(platform)
                     }
                 }
-                
-                if platform != platforms.last {
-                    Divider()
-                        .background(Color(hex: "#f3f3f3"))
-                }
             }
         }
-        .padding(.top, 16)
+        .listStyle(.plain)
     }
-    
-    // MARK: - Score Content (Range Slider)
-    
-    private func scoreContent(range: Binding<ClosedRange<Double>>, maxValue: Double) -> some View {
-        VStack(spacing: 20) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("From")
-                    Text("\(Int(range.wrappedValue.lowerBound))")
-                        .font(.custom("Nunito-Bold", size: 20))
-                        .foregroundColor(Color(hex: "#1a1a1a"))
-                        .monospacedDigit()
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("To")
-                    Text("\(Int(range.wrappedValue.upperBound))")
-                        .font(.custom("Nunito-Bold", size: 20))
-                        .foregroundColor(Color(hex: "#1a1a1a"))
-                        .monospacedDigit()
-                }
-            }
-            
-            RangeSlider(
-                range: range,
-                bounds: 0...maxValue,
-                step: maxValue == 100 ? 1.0 : 0.1
+
+    private func scoreContent(
+        title: String,
+        range: Binding<ClosedRange<Double>>,
+        maxValue: Double
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(title)
+                .font(.custom("Nunito-SemiBold", size: 16))
+
+            Text("\(Int(range.wrappedValue.lowerBound)) – \(Int(range.wrappedValue.upperBound))")
+                .font(.custom("Nunito-Regular", size: 14))
+
+            Slider(
+                value: Binding(
+                    get: {
+                        (range.wrappedValue.lowerBound + range.wrappedValue.upperBound) / 2
+                    },
+                    set: { newCenter in
+                        let halfWidth = (range.wrappedValue.upperBound - range.wrappedValue.lowerBound) / 2
+                        let lower = max(0, newCenter - halfWidth)
+                        let upper = min(maxValue, newCenter + halfWidth)
+                        range.wrappedValue = lower...upper
+                    }
+                ),
+                in: 0...maxValue
             )
         }
-        .padding(.top, 16)
     }
-    
-    // MARK: - Genres Content
-    
+
     private var genresContent: some View {
-        VStack(spacing: 0) {
-            let genres = ["Comedy", "Romance", "Musical", "Family", "Animation", "Adventure", "Fantasy", "Sci-Fi", "Historical", "Action", "Thriller", "Mystery", "Crime", "Horror", "War", "Western", "Documentary", "Biography", "Sport", "Drama"]
-            ForEach(genres, id: \.self) { genre in
-                CheckboxRow(
-                    title: genre,
-                    isSelected: filterState.selectedGenres.contains(genre)
-                ) {
+        List {
+            ForEach(SearchCategoriesView.mainCategories.flatMap { $0.genres }, id: \.self) { genre in
+                HStack {
+                    Text(genre)
+                    Spacer()
+                    if filterState.selectedGenres.contains(genre) {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(Color(hex: "#FEA500"))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
                     if filterState.selectedGenres.contains(genre) {
                         filterState.selectedGenres.remove(genre)
                     } else {
                         filterState.selectedGenres.insert(genre)
                     }
                 }
-                
-                if genre != genres.last {
-                    Divider()
-                        .background(Color(hex: "#f3f3f3"))
-                }
             }
         }
-        .padding(.top, 16)
+        .listStyle(.plain)
     }
-    
-    // MARK: - Year Content
-    
+
     private var yearContent: some View {
-        VStack(spacing: 20) {
-            // Year Range Slider (at top)
-            YearRangeSlider(
-                range: $filterState.yearRange,
-                bounds: 1925...2025
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Year")
+                .font(.custom("Nunito-SemiBold", size: 16))
+
+            Text("\(filterState.yearRange.lowerBound) – \(filterState.yearRange.upperBound)")
+                .font(.custom("Nunito-Regular", size: 14))
+
+            Slider(
+                value: Binding(
+                    get: {
+                        Double(filterState.yearRange.lowerBound + filterState.yearRange.upperBound) / 2
+                    },
+                    set: { newCenter in
+                        let width = Double(filterState.yearRange.upperBound - filterState.yearRange.lowerBound)
+                        let lower = max(1925, Int(newCenter - width / 2))
+                        let upper = min(2025, Int(newCenter + width / 2))
+                        filterState.yearRange = lower...upper
+                    }
+                ),
+                in: 1925...2025
             )
-            
-            // Text Input Fields (below slider)
-            HStack(spacing: 8) {
-                // From Year Input
-                YearInputField(
-                    value: filterState.yearRange.lowerBound,
-                    bounds: 1925...filterState.yearRange.upperBound,
-                    onValueChanged: { newValue in
-                        if newValue <= filterState.yearRange.upperBound {
-                            filterState.yearRange = newValue...filterState.yearRange.upperBound
-                        }
-                    }
-                )
-                
-                // Separator
-                Text("-")
-                    .font(.custom("Inter-Regular", size: 16))
-                    .foregroundColor(Color(hex: "#666666"))
-                    .frame(width: 20)
-                
-                // To Year Input
-                YearInputField(
-                    value: filterState.yearRange.upperBound,
-                    bounds: filterState.yearRange.lowerBound...2025,
-                    onValueChanged: { newValue in
-                        if newValue >= filterState.yearRange.lowerBound {
-                            filterState.yearRange = filterState.yearRange.lowerBound...newValue
-                        }
-                    }
-                )
-            }
         }
-        .padding(.top, 16)
     }
-    
-    // MARK: - Liked By Content
-    
+
     private var likedByContent: some View {
-        VStack(spacing: 0) {
-            let options = ["Any", "Friends", "Following", "Everyone"]
-            ForEach(options, id: \.self) { option in
-                RadioButtonRow(
-                    title: option,
-                    isSelected: filterState.likedBy == option
-                ) {
+        List {
+            ForEach(["Any", "Friends", "Critics"], id: \.self) { option in
+                HStack {
+                    Text(option)
+                    Spacer()
+                    if filterState.likedBy == option {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(Color(hex: "#FEA500"))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
                     filterState.likedBy = option
                 }
-                
-                if option != options.last {
-                    Divider()
-                        .background(Color(hex: "#f3f3f3"))
-                }
             }
         }
-        .padding(.top, 16)
+        .listStyle(.plain)
     }
-    
-    // MARK: - Actors Content
-    
+
     private var actorsContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            TextField("Enter actor name...", text: $filterState.actors)
-                .font(.custom("Inter-Regular", size: 16))
-                .foregroundColor(Color(hex: "#1a1a1a"))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color(hex: "#f3f3f3"))
-                .cornerRadius(8)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Actors")
+                .font(.custom("Nunito-SemiBold", size: 16))
+
+            TextField("Type actor names…", text: $filterState.actors)
+                .textFieldStyle(.roundedBorder)
         }
-        .padding(.top, 16)
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func clearFilter() {
-        switch filterType {
-        case .sortBy:
-            filterState.sortBy = "List order"
-        case .platform:
-            filterState.selectedPlatforms.removeAll()
-        case .tastyScore:
-            filterState.tastyScoreRange = 0...100
-        case .aiScore:
-            filterState.aiScoreRange = 0...10
-        case .genres:
-            filterState.selectedGenres.removeAll()
-        case .year:
-            filterState.yearRange = 1925...2025
-        case .likedBy:
-            filterState.likedBy = "Any"
-        case .actors:
-            filterState.actors = ""
-        }
+        .padding(.top, 12)
     }
 }
-
-// MARK: - Radio Button Row
-
-struct RadioButtonRow: View {
-    let title: String
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .stroke(isSelected ? Color(hex: "#FEA500") : Color(hex: "#B3B3B3"), lineWidth: 2)
-                        .frame(width: 24, height: 24)
-                    
-                    if isSelected {
-                        Circle()
-                            .fill(Color(hex: "#FEA500"))
-                            .frame(width: 14, height: 14)
-                    }
-                }
-                
-                Text(title)
-                    .font(.custom("Inter-Regular", size: 16))
-                    .foregroundColor(Color(hex: "#333333"))
-                
-                Spacer()
-            }
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Checkbox Row
-
-struct CheckboxRow: View {
-    let title: String
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 24))
-                    .foregroundColor(isSelected ? Color(hex: "#FEA500") : Color(hex: "#B3B3B3"))
-                
-                Text(title)
-                    .font(.custom("Inter-Regular", size: 16))
-                    .foregroundColor(Color(hex: "#333333"))
-                
-                Spacer()
-            }
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Preview
-
-#Preview {
-    SearchFilterDetailSheet(filterType: .sortBy)
-        .environmentObject(SearchFilterState.shared)
-}
-
