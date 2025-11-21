@@ -122,8 +122,33 @@ struct SearchFiltersBottomSheet: View {
         .presentationDetents([.height(600)])
         .presentationDragIndicator(.hidden)
         .sheet(item: $selectedFilterType) { filterType in
-            SearchFilterDetailSheet(filterType: filterType)
-                .environmentObject(filterState)
+            SearchFilterDetailSheet(
+                filterType: convertFilterType(filterType),
+                title: filterType.rawValue
+            )
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func convertFilterType(_ type: FilterType) -> SearchFilterDetailSheet.FilterType {
+        switch type {
+        case .sortBy:
+            return .sortBy
+        case .platform:
+            return .platform
+        case .tastyScore:
+            return .tastyScore
+        case .aiScore:
+            return .aiScore
+        case .genres:
+            return .genres
+        case .year:
+            return .year
+        case .likedBy:
+            return .likedBy
+        case .actors:
+            return .actors
         }
     }
 }

@@ -36,14 +36,16 @@ struct CategoryResultsView: View {
 
             List {
                 ForEach(movies) { movie in
-                    IndividualListView(movie: movie)
+                    MovieSummaryRow(movie: movie)
                         .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 12, trailing: 16))
                 }
             }
             .listStyle(.plain)
         }
         .background(Color(hex: "#F7F7F7"))
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
+        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
@@ -99,5 +101,89 @@ struct FilterSummaryBadge: View {
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(Color(hex: "#E3E3E3"), lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Movie Summary Row
+
+struct MovieSummaryRow: View {
+    let movie: MovieSummary
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Poster
+            MoviePosterImage(
+                posterURL: movie.posterImageURL,
+                width: 70,
+                height: 105
+            )
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            
+            // Content
+            VStack(alignment: .leading, spacing: 6) {
+                // Title
+                Text(movie.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(hex: "#1a1a1a"))
+                    .lineLimit(2)
+                
+                // Year / release info
+                if let release = movie.releaseDate, !release.isEmpty {
+                    Text(release)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#666666"))
+                        .lineLimit(1)
+                } else {
+                    Text(String(movie.year))
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#666666"))
+                }
+                
+                // Genres
+                if !movie.genres.isEmpty {
+                    Text(movie.genres.prefix(2).joined(separator: ", "))
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#999999"))
+                        .lineLimit(1)
+                }
+                
+                // Scores
+                HStack(spacing: 12) {
+                    // Tasty Score
+                    if let tastyScore = movie.tastyScore {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(Color(hex: "#FEA500"))
+                                .font(.system(size: 12))
+                            
+                            Text("\(Int(tastyScore * 100))%")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1a1a1a"))
+                        }
+                    }
+                    
+                    // AI Score
+                    if let aiScore = movie.aiScore {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(Color(hex: "#FFD60A"))
+                                .font(.system(size: 12))
+                            
+                            Text(String(format: "%.1f", aiScore))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1a1a1a"))
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
     }
 }

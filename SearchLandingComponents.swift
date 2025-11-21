@@ -178,6 +178,100 @@ private struct PlatformBadge: View {
     }
 }
 
+// MARK: - Genres Row
+
+private struct SearchGenre: Identifiable, Hashable {
+    let id = UUID()
+    let name: String
+    let icon: String
+}
+
+private let allSearchGenres: [SearchGenre] = [
+    .init(name: "Action", icon: "bolt.fill"),
+    .init(name: "Comedy", icon: "theatermasks.fill"),
+    .init(name: "Drama", icon: "film.fill"),
+    .init(name: "Thriller", icon: "eye.fill"),
+    .init(name: "Horror", icon: "moon.fill"),
+    .init(name: "Sci-Fi", icon: "airplane.departure"),
+    .init(name: "Romance", icon: "heart.fill"),
+    .init(name: "Adventure", icon: "map.fill"),
+]
+
+struct SearchGenresRow: View {
+    @Binding var selectedGenres: Set<String>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Genres")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Button("Clear All") {
+                    selectedGenres.removeAll()
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.orange)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(allSearchGenres) { genre in
+                        GenreBadge(
+                            genre: genre,
+                            isSelected: selectedGenres.contains(genre.name)
+                        ) {
+                            toggle(genre: genre)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+    }
+
+    private func toggle(genre: SearchGenre) {
+        if selectedGenres.contains(genre.name) {
+            selectedGenres.remove(genre.name)
+        } else {
+            selectedGenres.insert(genre.name)
+        }
+    }
+}
+
+private struct GenreBadge: View {
+    let genre: SearchGenre
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: genre.icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(isSelected ? .white : .orange)
+                
+                Text(genre.name)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(isSelected ? .white : .primary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isSelected ? Color.orange : Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(isSelected ? Color.orange : Color.gray.opacity(0.3), lineWidth: isSelected ? 0 : 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Start Searching Bar (black bar above tab bar)
 
 struct StartSearchingBar: View {

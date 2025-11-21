@@ -33,7 +33,7 @@ struct SearchView: View {
                             selectedServices: $selectedServices
                         )
 
-                        SearchCategoriesView(
+                        SearchGenresRow(
                             selectedGenres: $selectedGenres
                         )
 
@@ -70,10 +70,11 @@ struct SearchView: View {
 
         // Reset other filters to defaults for this new run
         filterState.sortBy = "List order"
-        filterState.tastyScoreRange = 0...100
-        filterState.aiScoreRange = 0...10
+        filterState.tastyScoreRange = 0.0...100.0
+        filterState.aiScoreRange = 0.0...10.0
         filterState.yearRange = 1925...2025
         filterState.likedBy = "Any"
+        filterState.watchedStatus = "Any"
         // Leave actors alone – user might refine later
 
         print("Start Searching with \(totalSelectionCount) selections")

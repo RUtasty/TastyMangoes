@@ -31,11 +31,11 @@ final class SearchFilterState: ObservableObject {
 
     // MARK: - Scores
 
-    /// Allowed range for Tasty Score (0–100)
-    @Published var tastyScoreRange: ClosedRange<Int> = 0...100
+    /// Allowed range for Tasty Score (0.0–100.0)
+    @Published var tastyScoreRange: ClosedRange<Double> = 0.0...100.0
 
-    /// Allowed range for AI Score (0–10)
-    @Published var aiScoreRange: ClosedRange<Int> = 0...10
+    /// Allowed range for AI Score (0.0–10.0)
+    @Published var aiScoreRange: ClosedRange<Double> = 0.0...10.0
 
     // MARK: - Release Year
 
@@ -49,6 +49,45 @@ final class SearchFilterState: ObservableObject {
 
     /// Free-text actor search field.
     @Published var actors: String = ""
+
+    /// Watched status filter ("Any", "Watched", "Unwatched")
+    @Published var watchedStatus: String = "Any"
+
+    // MARK: - Computed Properties
+
+    /// Text for platform filter badge (e.g. "Platform: Any" or "Platform: 3+")
+    var platformFilterText: String {
+        if selectedPlatforms.isEmpty {
+            return "Platform: Any"
+        } else if selectedPlatforms.count == 1 {
+            return "Platform: \(selectedPlatforms.first ?? "")"
+        } else {
+            return "Platform: \(selectedPlatforms.count)+"
+        }
+    }
+
+    /// Text for genre filter badge (e.g. "Genres: Any" or "Genres: 3+")
+    var genreFilterText: String {
+        if selectedGenres.isEmpty {
+            return "Genres: Any"
+        } else if selectedGenres.count == 1 {
+            return "Genres: \(selectedGenres.first ?? "")"
+        } else {
+            return "Genres: \(selectedGenres.count)+"
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    /// Clear all platform filters
+    func clearPlatformFilters() {
+        selectedPlatforms.removeAll()
+    }
+
+    /// Clear all genre filters
+    func clearGenreFilters() {
+        selectedGenres.removeAll()
+    }
 
     // Private so everyone uses the shared singleton
     private init() {}

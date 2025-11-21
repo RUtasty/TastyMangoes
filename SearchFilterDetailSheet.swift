@@ -228,7 +228,7 @@ struct SearchFilterDetailSheet: View {
 
     private var genresContent: some View {
         List {
-            ForEach(SearchCategoriesView.mainCategories.flatMap { $0.genres }, id: \.self) { genre in
+            ForEach(allGenres, id: \.self) { genre in
                 HStack {
                     Text(genre)
                     Spacer()
@@ -249,6 +249,31 @@ struct SearchFilterDetailSheet: View {
         }
         .listStyle(.plain)
     }
+    
+    // MARK: - Genre List
+    
+    private let allGenres: [String] = [
+        "Action",
+        "Adventure",
+        "Animation",
+        "Biography",
+        "Comedy",
+        "Crime",
+        "Documentary",
+        "Drama",
+        "Family",
+        "Fantasy",
+        "Historical",
+        "Horror",
+        "Musical",
+        "Mystery",
+        "Romance",
+        "Sci-Fi",
+        "Sport",
+        "Thriller",
+        "War",
+        "Western"
+    ]
 
     private var yearContent: some View {
         VStack(alignment: .leading, spacing: 16) {
